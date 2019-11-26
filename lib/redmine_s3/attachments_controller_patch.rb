@@ -11,7 +11,7 @@ module RedmineS3
         before_action :download_attachment_s3, :only => [:download]
         before_action :find_thumbnail_attachment_s3, :only => [:thumbnail]
         before_action :find_editable_attachments_s3, :only => [:edit, :update]
-        skip_before_filter :file_readable
+        skip_before_action :file_readable
       end
     end
 
