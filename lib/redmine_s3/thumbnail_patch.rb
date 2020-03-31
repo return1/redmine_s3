@@ -4,13 +4,20 @@ module RedmineS3
     def self.generate_s3_thumb(source, target, size, update_thumb = false)
       target_folder = RedmineS3::Connection.thumb_folder
       if update_thumb
-        return unless Object.const_defined?(:Magick)
-        require 'open-uri'
-        img = Magick::ImageList.new
+        return unless Object.const_defined?(:MiniMagick)
         url = RedmineS3::Connection.object_url(source)
-        open(url, 'rb') do |f| img = img.from_blob(f.read) end
-        img = img.strip!
-        img = img.resize_to_fit(size)
+        img = MiniMagick::Image.open(url)
+        img.combine_options do |c|
+          # convert everthing to jpg, compress files according to https://stackoverflow.com/a/48869031/156448
+          if img.mime_type != "image/jpeg"
+            img.format("jpg",1)
+          end
+          c.quality("60")
+          c.interlace("plane")
+          c.gaussian_blur("0.05")
+          c.strip
+          c.resize("#{size}x#{size}")
+        end
 
         RedmineS3::Connection.put(target, File.basename(target), img.to_blob, img.mime_type, target_folder)
       end
